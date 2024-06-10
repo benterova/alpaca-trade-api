@@ -111,7 +111,7 @@ module Alpaca
 
         def last_trade(symbol:)
           response = get_request(data_endpoint, "v1/last/stocks/#{symbol}")
-          raise InvalidRequest, JSON.parse(response.body)['message'] if response.status == 404
+          raise InvalidRequest, JSON.parse(response.body)['message'] if [404, 400].include?(response.status)
 
           LastTrade.new(JSON.parse(response.body))
         end
@@ -138,6 +138,7 @@ module Alpaca
           response = post_request(endpoint, 'v2/orders', params.compact)
           raise InsufficientFunds, JSON.parse(response.body)['message'] if response.status == 403
           raise MissingParameters, JSON.parse(response.body)['message'] if response.status == 422
+          raise InvalidRequest, JSON.parse(response.body)['message'] if response.status == 400
 
           Order.new(JSON.parse(response.body))
         end
@@ -182,7 +183,7 @@ module Alpaca
           response = patch_request(endpoint, "v2/orders/#{id}", params.compact)
           raise InsufficientFunds, JSON.parse(response.body)['message'] if response.status == 403
           raise InvalidOrderId, JSON.parse(response.body)['message'] if response.status == 404
-          raise InvalidRequest, JSON.parse(response.body)['message'] if response.status == 422
+          raise InvalidRequest, JSON.parse(response.body)['message'] if [400, 422].include?(response.status)
 
           Order.new(JSON.parse(response.body))
         end
